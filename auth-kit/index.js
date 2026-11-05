@@ -9,11 +9,11 @@ const TOKEN_KEY = 'token'
 
 function hashPassword(plain, { saltRounds = DEFAULT_SALT_ROUNDS } = {}) {
     if (Buffer.byteLength(plain) > 72) throw new Error('password cannot exceed 72 bytes')
-    bcrypt.hash(plain, saltRounds)
+    return bcrypt.hash(plain, saltRounds)
 }
 
 async function comparePassword(plain, hash) {
-    if (!plain || !hash ) return false
+    if (!plain || !hash) return false
     return bcrypt.compare(plain, hash)
 }
 
@@ -26,7 +26,7 @@ function signToken(payload, { secret, expiresIn = DEFAULT_EXPIRES_IN } = {}) {
     return jwt.sign(payload, secret, { expiresIn })
 }
 
-function verifyToken(token, { secret } = {}){
+function verifyToken(token, { secret } = {}) {
     if (!secret) throw new Error('secret is required')
     try {
         return jwt.verify(token, secret)
@@ -36,9 +36,8 @@ function verifyToken(token, { secret } = {}){
 }
 
 const setToken = (storage, token, key = TOKEN_KEY) => storage.setItem(key, token)
-const getToken = (storage, token, key = TOKEN_KEY) => storage.getItem(key)
-const clearToken = (storage, token, key = TOKEN_KEY) => storage.removeItem(key)
-
+const getToken = (storage, key = TOKEN_KEY) => storage.getItem(key)
+const clearToken = (storage, key = TOKEN_KEY) => storage.removeItem(key)
 
 module.exports = {
     hashPassword,
