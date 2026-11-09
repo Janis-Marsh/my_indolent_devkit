@@ -1,6 +1,7 @@
 'use strict'
 
 const express = require('express')
+const { ApiError } = require('../guard-kit')
 
 const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next)
 
@@ -32,11 +33,7 @@ function createCrudRouter(repository) {
     router.get('/:id', asyncHandler(async (req, res) => {
         const record = await repository.findById(req.params.id)
 
-        if (!record) {
-            const error = new Error('Record not found')
-            error.statusCode = 404
-            throw error
-        }
+        if (!record) throw ApiError.notFound('Record not found')
 
         return sendSuccess(res, record)
     }))
@@ -44,11 +41,7 @@ function createCrudRouter(repository) {
     router.put('/:id', asyncHandler(async (req, res) => {
         const record = await repository.update(req.params.id, req.body)
 
-        if (!record) {
-            const error = new Error('Record not found')
-            error.statusCode = 404
-            throw error
-        }
+        if (!record) throw ApiError.notFound('Record not found')
 
         return sendSuccess(res, record)
     }))
@@ -56,11 +49,7 @@ function createCrudRouter(repository) {
     router.delete('/:id', asyncHandler(async (req, res) => {
         const record = await repository.remove(req.params.id)
 
-        if (!record) {
-            const error = new Error('Record not found')
-            error.statusCode = 404
-            throw error
-        }
+        if (!record) throw ApiError.notFound('Record not found')
 
         return sendNoContent(res)
     }))

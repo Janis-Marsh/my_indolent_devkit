@@ -2,13 +2,15 @@
 
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
+const { ApiError } = require('../guard-kit')
 
 const DEFAULT_SALT_ROUNDS = 10
 const DEFAULT_EXPIRES_IN = '7d'
 const TOKEN_KEY = 'token'
 
 function hashPassword(plain, { saltRounds = DEFAULT_SALT_ROUNDS } = {}) {
-    if (Buffer.byteLength(plain) > 72) throw new Error('password cannot exceed 72 bytes')
+    if (typeof plain !== 'string') throw ApiError.badRequest('password must be a string')
+    if (Buffer.byteLength(plain) > 72) throw ApiError.badRequest('password cannot exceed 72 bytes')
     return bcrypt.hash(plain, saltRounds)
 }
 
@@ -18,20 +20,24 @@ async function comparePassword(plain, hash) {
 }
 
 function needsRehash(hash, { saltRounds = DEFAULT_SALT_ROUNDS } = {}) {
-    return bcrypt.getRounds(hash) < saltRounds
+    try {
+        return bcrypt.getRounds(hash) < saltRounds
+    } catch (error) {
+        throw ApiError.badRequest('Invalid password hash')
+    }
 }
 
 function signToken(payload, { secret, expiresIn = DEFAULT_EXPIRES_IN } = {}) {
-    if (!secret) throw new Error('secret is required')
+    if (!secret) throw ApiError.badRequest('secret is required')
     return jwt.sign(payload, secret, { expiresIn })
 }
 
 function verifyToken(token, { secret } = {}) {
-    if (!secret) throw new Error('secret is required')
+    if (!secret) throw ApiError.badRequest('secret is required')
     try {
         return jwt.verify(token, secret)
     } catch (error) {
-        throw new Error('Invalid Token')
+        throw ApiError.unauthorized('Invalid Token')
     }
 }
 

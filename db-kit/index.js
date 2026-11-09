@@ -2,6 +2,7 @@
 'use strict'
 
 const mongoose = require('mongoose')
+const { ApiError } = require('../guard-kit')
 
 let listenersAttached = false
 
@@ -24,7 +25,7 @@ function attachListeners() {
 }
 
 async function connectDatabase(uri) {
-    if (!uri) throw new Error('MongoDB URI is required')
+    if (!uri) throw ApiError.badRequest('MongoDB URI is required')
 
     mongoose.set('strictQuery', true)
     attachListeners()
@@ -34,7 +35,7 @@ async function connectDatabase(uri) {
             serverSelectionTimeoutMS: 10000
         })
     } catch (err) {
-        throw new Error(`Couldn't connect to MongoDB: ${err.message}`, {
+        throw new ApiError(500, `Couldn't connect to MongoDB: ${err.message}`, {
             cause: err
         })
     }
@@ -75,7 +76,7 @@ function defineModel(name, schema) {
 }
 
 function createRepository(Model) {
-    if (!Model) throw new Error('Model is required')
+    if (!Model) throw ApiError.badRequest('Model is required')
 
     const create = (data) => Model.create(data)
 
