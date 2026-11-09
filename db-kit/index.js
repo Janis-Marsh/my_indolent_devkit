@@ -99,7 +99,6 @@ function createRepository(Model) {
             ? Model.findByIdAndDelete(id)
             : null
 
-
     return {
         create,
         findAll,
