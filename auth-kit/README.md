@@ -14,7 +14,7 @@ Install the required dependencies:
 npm install bcryptjs jsonwebtoken
 ```
 
-Copy the `auth-kit` folder into your project and import the functions you need.
+Copy the `auth-kit` folder into your project, and copy the `guard-kit` folder next to it. auth-kit imports `ApiError` from `../guard-kit`, so both folders must sit side by side.
 
 ## Usage
 
@@ -70,17 +70,8 @@ Hashes a plain-text password using bcrypt.
 
 - `plain`: Password to hash.
 - `options.saltRounds`: Number of salt rounds. Defaults to `10`.
-- Rejects passwords longer than 72 bytes.
 - Returns a promise containing the password hash.
-
-### `comparePassword(plain, hash)`
-
-Compares a plain-text password with an existing hash.
-
-- `plain`: Password to check.
-- `hash`: Stored password hash.
-- Returns `false` if either argument is missing.
-- Returns a promise containing a boolean.
+- Throws an `ApiError` (400) if the password is not a string or is longer than 72 bytes.
 
 ### `needsRehash(hash, options)`
 
@@ -89,6 +80,7 @@ Checks whether a password hash uses fewer salt rounds than the configured value.
 - `hash`: Existing bcrypt password hash.
 - `options.saltRounds`: Desired salt rounds. Defaults to `10`.
 - Returns `true` if the hash needs to be updated.
+- Throws an `ApiError` (400) if the hash is not a valid bcrypt hash.
 
 ### `signToken(payload, options)`
 
@@ -98,7 +90,7 @@ Creates a signed JWT.
 - `options.secret`: Required signing secret.
 - `options.expiresIn`: Token expiration time. Defaults to `'7d'`.
 - Returns the signed token.
-- Throws an error if the secret is missing.
+- Throws an `ApiError` (400) if the secret is missing.
 
 ### `verifyToken(token, options)`
 
@@ -106,7 +98,8 @@ Verifies a JWT and returns its decoded payload.
 
 - `token`: JWT to verify.
 - `options.secret`: Required verification secret.
-- Throws an error if the secret is missing or the token is invalid.
+- Throws an `ApiError` (400) if the secret is missing.
+- Throws an `ApiError` (401) if the token is invalid or expired.
 
 ### `setToken(storage, token, key)`
 
@@ -140,6 +133,8 @@ Removes a stored token.
 - Required the JWT secret to be passed into the functions instead of hardcoding it.
 - Used a storage argument for token helpers instead of depending directly on browser storage. This allows different storage implementations to be used.
 - Kept the functions independent so projects can import only the authentication features they need.
+- Threw `ApiError` from guard-kit for invalid input and invalid tokens, so every kit reports errors in one consistent format. This is the only dependency on another kit, and it is why `guard-kit` must be copied alongside this module.
+- Used a 400 error for missing secrets and bad input, and a 401 error for invalid or expired tokens, so callers can tell developer mistakes from failed authentication.
 
 ## Changes
 

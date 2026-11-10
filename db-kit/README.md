@@ -14,7 +14,7 @@ Install the required dependency:
 npm install mongoose
 ```
 
-Copy the `db-kit` folder into your project and import the functions you need.
+Copy the `db-kit` folder into your project, and copy the `guard-kit` folder next to it. db-kit imports `ApiError` from `../guard-kit`, so both folders must sit side by side.
 
 ## Usage
 
@@ -94,7 +94,8 @@ Connects to MongoDB.
 - Enables Mongoose strict query mode.
 - Attaches connection event listeners once.
 - Uses a server selection timeout of 10 seconds.
-- Throws an error if the URI is missing or the connection fails.
+- Throws an `ApiError` (400) if the URI is missing.
+- Throws an `ApiError` (500) if the connection fails.
 
 ### `disconnectDatabase()`
 
@@ -135,7 +136,7 @@ Creates or retrieves a Mongoose model.
 Creates a reusable repository containing five CRUD methods.
 
 - `Model`: Mongoose model used by the repository.
-- Throws an error if no model is provided.
+- Throws an `ApiError` (400) if no model is provided.
 
 Repository methods:
 
@@ -173,3 +174,4 @@ Updates run Mongoose validators.
 - Added a repository factory with create, find, update, and delete operations.
 - Added ObjectId validation before ID-based repository operations.
 - Added JSON transformation options for timestamps, virtuals, and hidden fields.
+- Refactored connection and repository errors to throw `ApiError` from guard-kit instead of generic errors.

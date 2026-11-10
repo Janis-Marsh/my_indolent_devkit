@@ -7,19 +7,30 @@ const { ApiError } = require('../guard-kit')
 const DEFAULT_SALT_ROUNDS = 10
 const DEFAULT_EXPIRES_IN = '7d'
 const TOKEN_KEY = 'token'
+const MAX_PASSWORD_BYTES = 72
 
-function hashPassword(plain, { saltRounds = DEFAULT_SALT_ROUNDS } = {}) {
+function assertSaltRounds(saltRounds) {
+    if (!Number.isInteger(saltRounds) || saltRounds < 4 || saltRounds > 31) {
+        throw ApiError.badRequest('saltRounds must be an integer between 4 and 31')
+    }
+}
+
+async function hashPassword(plain, { saltRounds = DEFAULT_SALT_ROUNDS } = {}) {
     if (typeof plain !== 'string') throw ApiError.badRequest('password must be a string')
-    if (Buffer.byteLength(plain) > 72) throw ApiError.badRequest('password cannot exceed 72 bytes')
+    if (Buffer.byteLength(plain) > MAX_PASSWORD_BYTES) throw ApiError.badRequest('password cannot exceed 72 bytes')
+    assertSaltRounds(saltRounds)
     return bcrypt.hash(plain, saltRounds)
 }
 
 async function comparePassword(plain, hash) {
+    if (typeof plain !== 'string' || typeof hash !== 'string') return false
     if (!plain || !hash) return false
+    if (Buffer.byteLength(plain) > MAX_PASSWORD_BYTES) return false
     return bcrypt.compare(plain, hash)
 }
 
 function needsRehash(hash, { saltRounds = DEFAULT_SALT_ROUNDS } = {}) {
+    assertSaltRounds(saltRounds)
     try {
         return bcrypt.getRounds(hash) < saltRounds
     } catch (error) {

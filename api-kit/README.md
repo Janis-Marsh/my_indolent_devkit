@@ -14,7 +14,7 @@ Install the required dependency:
 npm install express
 ```
 
-Copy the `api-kit` folder into your project and import the functions you need.
+Copy the `api-kit` folder into your project, and copy the `guard-kit` folder next to it. api-kit imports `ApiError` from `../guard-kit`, so both folders must sit side by side.
 
 ## Usage
 
@@ -29,6 +29,7 @@ const {
     sendNoContent,
     createCrudRouter
 } = require('./api-kit')
+const { errorHandler } = require('./guard-kit')
 
 const app = express()
 
@@ -52,12 +53,7 @@ app.get('/api/status', asyncHandler(async (req, res) => {
 }))
 
 // Error handler
-app.use((err, req, res, next) => {
-    res.status(err.statusCode || 500).json({
-        success: false,
-        error: err.message
-    })
-})
+app.use(errorHandler)
 
 app.listen(3000)
 ```
@@ -120,7 +116,7 @@ Creates an Express router with five CRUD endpoints.
 | PUT | `/:id` | `update(req.params.id, req.body)` | 200 |
 | DELETE | `/:id` | `remove(req.params.id)` | 204 |
 
-If a requested record cannot be found, the router forwards a `404` error with the message `Record not found` to Express error-handling middleware.
+If a requested record cannot be found, the router throws an `ApiError` (404) with the message `Record not found`, which is forwarded to Express error-handling middleware.
 
 ## Decisions
 
@@ -129,7 +125,7 @@ If a requested record cannot be found, the router forwards a `404` error with th
 - Used a consistent success response format with `success` and `data` properties.
 - Used HTTP status `201` for successful resource creation and `204` for successful deletion.
 - Used HTTP status `404` when a requested record does not exist.
-- Kept error response formatting in the application's error-handling middleware so each application can decide how to format errors.
+- Threw `ApiError` from guard-kit for missing records, and left formatting to the application's error-handling middleware (guard-kit's `errorHandler` or your own). This is the only dependency on another kit, and it is why `guard-kit` must be copied alongside this module.
 
 ## Changes
 
@@ -139,3 +135,4 @@ If a requested record cannot be found, the router forwards a `404` error with th
 - Added `sendNoContent` for deletion responses.
 - Added `createCrudRouter` with GET, POST, PUT, and DELETE routes.
 - Added missing-record checks for find, update, and delete operations.
+- Refactored missing-record errors to throw `ApiError.notFound` from guard-kit instead of generic errors.

@@ -35,9 +35,7 @@ async function connectDatabase(uri) {
             serverSelectionTimeoutMS: 10000
         })
     } catch (err) {
-        throw new ApiError(500, `Couldn't connect to MongoDB: ${err.message}`, {
-            cause: err
-        })
+        throw new ApiError(500, `Couldn't connect to MongoDB: ${err.message}`, { reason: err.message })
     }
 }
 
