@@ -6,7 +6,7 @@ function createApiClient({ baseUrl = '', getToken, headers = {}, fetchImpl } = {
     const doFetch = fetchImpl || globalThis.fetch
 
     if (typeof doFetch !== 'function') {
-        throw new ApiError.badRequest('fetch is not available; pass fetchImpl')
+        throw ApiError.badRequest('fetch is not available; pass fetchImpl')
     }
 
     async function request(method, path, body) {
