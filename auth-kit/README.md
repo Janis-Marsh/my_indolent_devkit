@@ -69,18 +69,30 @@ The `storage` argument must be an object that provides `setItem()`, `getItem()`,
 Hashes a plain-text password using bcrypt.
 
 - `plain`: Password to hash.
-- `options.saltRounds`: Number of salt rounds. Defaults to `10`.
+- `options.saltRounds`: Number of salt rounds, an integer from 4 to 31. Defaults to `10`.
 - Returns a promise containing the password hash.
-- Throws an `ApiError` (400) if the password is not a string or is longer than 72 bytes.
+- Rejects with an `ApiError` (400) if the password is not a string or is longer than 72 bytes.
+- Rejects with an `ApiError` (400) if `saltRounds` is not an integer from 4 to 31.
+
+### `comparePassword(plain, hash)`
+
+Compares a plain-text password with an existing hash.
+
+- `plain`: Password to check.
+- `hash`: Stored password hash.
+- Returns a promise containing a boolean.
+- Returns `false` if either argument is missing or is not a string.
+- Returns `false` if the password is longer than 72 bytes, because bcrypt would otherwise compare only the first 72 bytes.
 
 ### `needsRehash(hash, options)`
 
 Checks whether a password hash uses fewer salt rounds than the configured value.
 
 - `hash`: Existing bcrypt password hash.
-- `options.saltRounds`: Desired salt rounds. Defaults to `10`.
+- `options.saltRounds`: Desired salt rounds, an integer from 4 to 31. Defaults to `10`.
 - Returns `true` if the hash needs to be updated.
 - Throws an `ApiError` (400) if the hash is not a valid bcrypt hash.
+- Throws an `ApiError` (400) if `saltRounds` is not an integer from 4 to 31.
 
 ### `signToken(payload, options)`
 
@@ -127,7 +139,9 @@ Removes a stored token.
 
 - Used `bcryptjs` for password hashing and comparison.
 - Set the default salt rounds to `10`.
-- Reject passwords longer than 72 bytes to avoid bcrypt's password-length limitation.
+- Made `hashPassword` async so every failure, including invalid input, reaches the caller as a rejected promise.
+- Made `comparePassword` return `false` for passwords over 72 bytes instead of comparing them. bcrypt ignores bytes past 72, so without this check a long password would match a hash of only its first 72 bytes.
+- Limited `saltRounds` to integers from 4 to 31, the range bcrypt accepts, so bad values fail with a clear error instead of an obscure one from the library.
 - Used `jsonwebtoken` for signing and verifying JWTs.
 - Set the default token expiration to seven days.
 - Required the JWT secret to be passed into the functions instead of hardcoding it.
@@ -143,3 +157,6 @@ Removes a stored token.
 - Added JWT signing and verification functions.
 - Added reusable token storage, retrieval, and removal helpers.
 - Exported all authentication functions from one module entry point.
+- Refactored input and token errors to throw `ApiError` from guard-kit instead of generic errors.
+- Added validation for `saltRounds` in `hashPassword` and `needsRehash`.
+- Changed `comparePassword` to return `false` for non-string input and for passwords over 72 bytes.
